@@ -61,6 +61,7 @@ func (s *Server) setupRoutes(router *gin.Engine) {
 		Logger:      s.Conf.Logger,
 		DB:          s.DB,
 		EventBus:    s.EventBus,
+		Tracer:      otel.GetTracerProvider().Tracer("github.com/metal-toolbox/governor-api/pkg/api/v1alpha1"),
 	}
 
 	v1alpha1 := router.Group("/api/v1alpha1")
@@ -74,6 +75,7 @@ func (s *Server) setupRoutes(router *gin.Engine) {
 		Logger:      s.Conf.Logger,
 		DB:          s.DB,
 		EventBus:    s.EventBus,
+		Tracer:      otel.GetTracerProvider().Tracer("github.com/metal-toolbox/governor-api/pkg/api/v1beta1"),
 	}
 
 	v1beta1 := router.Group("/api/v1beta1")

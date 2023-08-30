@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 
 	"github.com/metal-toolbox/auditevent/ginaudit"
@@ -29,6 +30,7 @@ type Router struct {
 	DB             *sqlx.DB
 	EventBus       *eventbus.Client
 	Logger         *zap.Logger
+	Tracer         trace.Tracer
 }
 
 // Routes sets up protected routes and sets the scopes for said routes

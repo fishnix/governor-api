@@ -162,6 +162,11 @@ func createGroupRequestValidator(group *models.Group) (string, error) {
 
 // createGroup creates a user in the database
 func (r *Router) createGroup(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	ctx, span := r.Tracer.Start(ctx, "router.CreateGroup")
+	defer span.End()
+
 	req := GroupReq{}
 	if err := c.BindJSON(&req); err != nil {
 		sendError(c, http.StatusBadRequest, "unable to bind request: "+err.Error())
@@ -182,13 +187,13 @@ func (r *Router) createGroup(c *gin.Context) {
 
 	dbtools.SetGroupSlug(group)
 
-	tx, err := r.DB.BeginTx(c.Request.Context(), nil)
+	tx, err := r.DB.BeginTx(ctx, nil)
 	if err != nil {
 		sendError(c, http.StatusBadRequest, "error starting group create transaction: "+err.Error())
 		return
 	}
 
-	if err := group.Insert(c.Request.Context(), tx, boil.Infer()); err != nil {
+	if err := group.Insert(ctx, tx, boil.Infer()); err != nil {
 		msg := "error creating group: " + err.Error()
 
 		if err := tx.Rollback(); err != nil {
@@ -200,7 +205,7 @@ func (r *Router) createGroup(c *gin.Context) {
 		return
 	}
 
-	event, err := dbtools.AuditGroupCreated(c.Request.Context(), tx, getCtxAuditID(c), getCtxUser(c), group)
+	event, err := dbtools.AuditGroupCreated(ctx, tx, getCtxAuditID(c), getCtxUser(c), group)
 	if err != nil {
 		msg := "error creating group (audit): " + err.Error()
 
@@ -237,7 +242,7 @@ func (r *Router) createGroup(c *gin.Context) {
 		return
 	}
 
-	if err := r.EventBus.Publish(c.Request.Context(), events.GovernorGroupsEventSubject, &events.Event{
+	if err := r.EventBus.Publish(ctx, events.GovernorGroupsEventSubject, &events.Event{
 		Version: events.Version,
 		Action:  events.GovernorEventCreate,
 		AuditID: c.GetString(ginaudit.AuditIDContextKey),
